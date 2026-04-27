@@ -18,6 +18,11 @@ import { trips, type Trip } from "./data/trips";
 
 const routeFromHash = () => window.location.hash.replace(/^#/, "") || "/";
 const TRANSITION_DURATION_MS = 980;
+const introBackgrounds = [
+  "/photos/intro-bg/beihai-01.jpg",
+  "/photos/intro-bg/beihai-02.jpg",
+  "/photos/intro-bg/beihai-03.jpg"
+];
 
 type TripTransition = {
   src: string;
@@ -148,15 +153,15 @@ function HomePage({
           </div>
         </div>
         <div className="depth-scene" aria-label="我们的旅行合照和照片预览">
-          <div className="depth-backdrop" aria-hidden="true">
-            <PhotoFrame src={featuredTrip.cover} alt="" />
-            <PhotoFrame src={trips[1]?.cover} alt="" />
-            <PhotoFrame src={trips[2]?.cover} alt="" />
-          </div>
-          <div className="intro-collage" aria-hidden="true">
-            <PhotoFrame src={featuredTrip.cover} alt="" priority />
-            <PhotoFrame src={trips[1]?.cover} alt="" />
-            <PhotoFrame src={trips[2]?.cover} alt="" />
+          <div className="intro-background-wall" aria-hidden="true">
+            {introBackgrounds.map((photo, index) => (
+              <PhotoFrame
+                key={photo}
+                src={photo}
+                alt=""
+                className={`intro-bg-photo intro-bg-photo-${index + 1}`}
+              />
+            ))}
           </div>
           <CoupleCutout />
         </div>

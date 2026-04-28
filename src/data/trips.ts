@@ -4,6 +4,8 @@ export type Trip = {
   location: string;
   date: string;
   cover: string;
+  heroImage?: string;
+  timelineImage?: string;
   transitionImage?: string;
   photos: string[];
   summary: string;
@@ -13,16 +15,36 @@ export type Trip = {
 export const trips: Trip[] = [
   {
     slug: "beihai",
-    title: "北海风吹过的合照",
+    title: "北海吹过的风",
     location: "北海",
     date: "2023.10",
-    cover: "/photos/beihai/cover.png",
+    cover: "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231003142712.jpg",
+    heroImage: "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG_20231002_115401.jpg",
+    timelineImage: "/photos/couple-cutout.png",
     transitionImage: "/photos/beihai/cartoon_we.png",
     photos: [
-      "/photos/beihai/cover.png",
-      "/photos/beihai/01.jpg",
-      "/photos/beihai/02.jpg",
-      "/photos/beihai/03.jpg"
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231003142712.jpg",
+      "/photos/beihai/ship_move.mp4",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_7477.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231003135752.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6731.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6650.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG_20231002_115401.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231003142853.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231001151051.jpg",
+      "/photos/beihai/airbus_fly.mp4",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231005065015.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6616.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG_20231004_195841.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG_20231004_204824.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6917.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6902.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6402.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6756.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_7485.JPG",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG_20231004_111919.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231006111346.jpg",
+      "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/IMG20231003131905.jpg"
     ],
     summary: "海边的风很亮，我们把这一刻留在了镜头里。",
     story:

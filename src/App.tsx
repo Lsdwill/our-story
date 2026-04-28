@@ -19,6 +19,7 @@ import { trips, type Trip } from "./data/trips";
 
 const routeFromHash = () => window.location.hash.replace(/^#/, "") || "/";
 const TRANSITION_DURATION_MS = 980;
+const MEDIA_PRELOAD_TIMEOUT_MS = 45000;
 const introBackgrounds = [
   "/photos/intro-bg/beihai-01.jpg",
   "/photos/intro-bg/beihai-02.jpg",
@@ -30,12 +31,143 @@ const DIAGONAL_GALLERY_PHOTOS = {
   topRight: "https://ink-app-cards.oss-ap-southeast-1.aliyuncs.com/img/北海/DSC_6402.JPG"
 };
 const diagonalGalleryPhotoSet = new Set(Object.values(DIAGONAL_GALLERY_PHOTOS));
+const isVideoSource = (src: string) => /\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(src);
+const appMediaSources = Array.from(
+  new Set(
+    [
+      ...introBackgrounds,
+      "/photos/couple-cutout.png",
+      ...Object.values(DIAGONAL_GALLERY_PHOTOS),
+      ...trips.flatMap((trip) => [
+        trip.cover,
+        trip.heroImage,
+        trip.timelineImage,
+        trip.transitionImage,
+        ...trip.photos
+      ])
+    ].filter((source): source is string => Boolean(source))
+  )
+);
+const mediaPreloadCache = new Map<string, Promise<boolean>>();
 
 type TripTransition = {
   src: string;
   x: number;
   y: number;
 };
+
+type MediaPreloadState = {
+  loaded: number;
+  total: number;
+  isComplete: boolean;
+};
+
+function preloadImageSource(src: string) {
+  return new Promise<boolean>((resolve) => {
+    const image = new Image();
+    let isSettled = false;
+
+    const finish = (isLoaded: boolean) => {
+      if (isSettled) {
+        return;
+      }
+
+      isSettled = true;
+      window.clearTimeout(timeoutId);
+      image.onload = null;
+      image.onerror = null;
+      resolve(isLoaded);
+    };
+
+    const timeoutId = window.setTimeout(() => finish(false), MEDIA_PRELOAD_TIMEOUT_MS);
+    image.onload = () => finish(true);
+    image.onerror = () => finish(false);
+    image.decoding = "async";
+    image.src = src;
+  });
+}
+
+async function preloadVideoSource(src: string) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), MEDIA_PRELOAD_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(src, {
+      cache: "force-cache",
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    await response.blob();
+    return true;
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+function preloadMediaSource(src: string) {
+  const cached = mediaPreloadCache.get(src);
+
+  if (cached) {
+    return cached;
+  }
+
+  const request = (isVideoSource(src) ? preloadVideoSource(src) : preloadImageSource(src)).catch(() => false);
+  mediaPreloadCache.set(src, request);
+  return request;
+}
+
+function useMediaPreloader(sources: string[]): MediaPreloadState {
+  const [state, setState] = useState<MediaPreloadState>(() => ({
+    loaded: 0,
+    total: sources.length,
+    isComplete: sources.length === 0
+  }));
+
+  useEffect(() => {
+    let isCancelled = false;
+    let loaded = 0;
+    const total = sources.length;
+
+    setState({
+      loaded: 0,
+      total,
+      isComplete: total === 0
+    });
+
+    if (total === 0) {
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    sources.forEach((src) => {
+      preloadMediaSource(src).finally(() => {
+        if (isCancelled) {
+          return;
+        }
+
+        loaded += 1;
+        setState({
+          loaded,
+          total,
+          isComplete: loaded >= total
+        });
+      });
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [sources]);
+
+  return state;
+}
 
 function useHashRoute() {
   const [route, setRoute] = useState(routeFromHash);
@@ -81,7 +213,7 @@ function PhotoFrame({
 }) {
   const [hasError, setHasError] = useState(false);
   const isInteractive = Boolean(onSelect);
-  const isVideo = /\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(src);
+  const isVideo = isVideoSource(src);
   const handleKeyDown = (event: KeyboardEvent<HTMLImageElement | HTMLVideoElement | HTMLDivElement>) => {
     if (!onSelect || (event.key !== "Enter" && event.key !== " ")) {
       return;
@@ -463,7 +595,30 @@ function TransitionOverlay({ transition }: { transition?: TripTransition }) {
   );
 }
 
+function LoadingScreen({ loaded, total }: MediaPreloadState) {
+  const progress = total > 0 ? Math.round((loaded / total) * 100) : 100;
+
+  return (
+    <main className="loading-screen" aria-live="polite" aria-busy="true">
+      <div className="loading-panel">
+        <span className="loading-mark" aria-hidden="true">
+          <Heart size={22} strokeWidth={2.2} />
+        </span>
+        <p className="eyebrow">Loading memories</p>
+        <h1>正在把照片装进时光里。</h1>
+        <div className="loading-progress" aria-label={`加载进度 ${progress}%`}>
+          <span className="loading-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <p className="loading-count">
+          {loaded} / {total} · {progress}%
+        </p>
+      </div>
+    </main>
+  );
+}
+
 export function App() {
+  const preloadState = useMediaPreloader(appMediaSources);
   const route = useHashRoute();
   const transitionTimer = useRef<number | undefined>(undefined);
   const [transition, setTransition] = useState<TripTransition | undefined>();
@@ -519,6 +674,10 @@ export function App() {
   }, [route]);
 
   const isTripRoute = route.startsWith("/trip/");
+
+  if (!preloadState.isComplete) {
+    return <LoadingScreen {...preloadState} />;
+  }
 
   return (
     <div className="app-shell">
